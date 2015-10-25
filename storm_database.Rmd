@@ -68,6 +68,10 @@ Your analyis must have no more than three figures. Figures may have multiple plo
 
 You must show all your code for the work in your analysis document. This may make the document a bit verbose, but that is okay. In general, you should ensure that echo = TRUE for every code chunk (this is the default setting in knitr).
 
+## Synopsis
+
+## Data Processing
+
 Load the necessary packages:
 
 ```{r}
@@ -199,3 +203,30 @@ subdata$evtype <- gsub("^glaze.*", "freezing fog", subdata$evtype)
 subdata$evtype <- gsub("^heavy sho.*", "heavy rain", subdata$evtype)
 subdata$evtype <- gsub("^brush.*|^grass fires$", "wildfire", subdata$evtype)
 ```
+
+Add event year to the dataset and discard data prior to 1996. This is because the Storm Database has complete data for all events that occured from 1996 onwards. See the page [here] (https://www.ncdc.noaa.gov/stormevents/details.jsp) 
+
+```{r}
+subdata <- mutate(subdata, date = as.Date(data$bgn_date, "%m/%d/%Y %H:%M:%S"))
+subdata <- mutate(subdata, event_year = year(date))
+subdata <- filter(subdata, event_year >= 1996)
+```
+
+Add fields to get the true value of property and crop damage.
+
+```{r}
+subdata <- mutate(subdata, propdmgtotal = ifelse(propdmgexp == "K", propdmg * 1000, ifelse(propdmgexp == "M", propdmg * 1000000, ifelse(propdmgexp == "B",propdmg * 1000000000, propdmg *1))))
+subdata <- mutate(subdata, cropdmgtotal = ifelse(cropdmgexp == "K", cropdmg * 1000, ifelse(cropdmgexp == "M", cropdmg * 1000000, ifelse(cropdmgexp == "B",cropdmg * 1000000000, cropdmg *1))))
+subdata <- mutate(subdata, totaldmg = propdmgtotal + cropdmgtotal)
+```
+
+Create subsets of data for economic damages, fatalities, and injuries
+
+```{r}
+totaldmg <- arrange(summarise(group_by(subdata, evtype), total_damage = sum(totaldmg)), desc(total_damage))
+fatalities <- arrange(summarise(group_by(subdata, evtype), fatalities = sum(fatalities)), desc(fatalities))
+injuries <- arrange(summarise(group_by(subdata, evtype), injuries = sum(injuries)), desc(injuries))
+```
+
+## Results
+
