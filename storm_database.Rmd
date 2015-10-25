@@ -223,10 +223,23 @@ subdata <- mutate(subdata, totaldmg = propdmgtotal + cropdmgtotal)
 Create subsets of data for economic damages, fatalities, and injuries
 
 ```{r}
-totaldmg <- arrange(summarise(group_by(subdata, evtype), total_damage = sum(totaldmg)), desc(total_damage))
-fatalities <- arrange(summarise(group_by(subdata, evtype), fatalities = sum(fatalities)), desc(fatalities))
-injuries <- arrange(summarise(group_by(subdata, evtype), injuries = sum(injuries)), desc(injuries))
+totaldmg <- arrange(top_n(summarise(group_by(subdata, evtype), total_damage = sum(totaldmg)), 10), desc(total_damage))
+fatalities <- arrange(top_n(summarise(group_by(subdata, evtype), fatalities = sum(fatalities)), 10), desc(fatalities))
+injuries <- arrange(top_n(summarise(group_by(subdata, evtype), injuries = sum(injuries)), 10), desc(injuries))
 ```
 
 ## Results
 
+Natural storms have tremendous economic consequences. We aggregated total property and crop damages between 1996 to 2011 in the United States and came up with the top 10 storm types. Flood tops the list with over $150 billion in economic damages over the 15-year period, followed by hurricanes, and storm surge.
+
+```{r}
+ggplot(data = totaldmg, aes(x = reorder(evtype, total_damage), y = total_damage)) + geom_bar(stat = "identity", fill = "#F8766D") + coord_flip() + ggtitle("Top 10 Property and Crop Damage by Storm Type") + ylab("Total Damage (in million dollars)") + xlab("Storm Type")
+```
+
+As for health consequences, I looked at both fatalities and injuries. Data has suggested that excessive heat and tornadoes caused the most deaths with approximately 1,800 and 1,500 people respectively. 
+
+```{r}
+ggplot(data = fatalities, aes(x = reorder(evtype, fatalities), y = fatalities)) + geom_bar(stat = "identity", fill = "#00BF7D") + coord_flip() + ggtitle("Top 10 Fatalities by Storm Type") + ylab("Total Fatalities") + xlab("Storm Type")
+```
+
+In addition to deaths, tornadoes also topped the top 10 injuries list. It caused the most injuries by far compared to the rest on this list. Flood is second and excessive heat is third with a little over 6,000 in the 15-year period.
